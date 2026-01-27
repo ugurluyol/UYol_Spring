@@ -1,0 +1,19 @@
+package org.project.domain.shared.value_objects;
+
+import java.util.UUID;
+
+import static org.project.domain.shared.util.Utils.required;
+
+public record UserID(UUID value) {
+    public UserID {
+        required("value", value);
+    }
+
+    public static UserID newID() {
+        return new UserID(UUID.randomUUID());
+    }
+
+    public static UserID fromString(String value) {
+        return new UserID(UUID.fromString(value));
+    }
+}

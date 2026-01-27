@@ -1,0 +1,8 @@
+package org.project.domain.ride.enumerations;
+
+public enum RideStatus {
+    PENDING,
+    ON_THE_ROAD,
+    CANCELED,
+    ENDED_SUCCESSFULLY
+}
