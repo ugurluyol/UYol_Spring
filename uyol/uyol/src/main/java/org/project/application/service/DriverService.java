@@ -3,10 +3,7 @@ package org.project.application.service;
 import static org.project.application.util.RestUtil.required;
 import static org.project.application.util.RestUtil.responseException;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.project.application.dto.fleet.CarDTO;
 import org.project.application.dto.ride.DriverRideForm;
@@ -23,12 +20,14 @@ import org.project.domain.ride.entities.RideRequest;
 import org.project.domain.ride.enumerations.RideRule;
 import org.project.domain.ride.repositories.RideRepository;
 import org.project.domain.ride.value_object.*;
+import org.project.domain.shared.annotations.Nullable;
 import org.project.domain.shared.value_objects.UserID;
 import org.project.domain.user.entities.User;
 import org.project.domain.user.factories.IdentifierFactory;
 import org.project.domain.user.repositories.UserRepository;
 import org.project.infrastructure.cache.RideRequests;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,13 +42,13 @@ public class DriverService {
     private final DriverRepository driverRepository;
 
     public DriverService(
-            RideRequests rideRequests,
+            Optional<RideRequests> rideRequests,
             CarRepository carRepository,
             RideRepository rideRepository,
             UserRepository userRepository,
             DriverRepository driverRepository
     ) {
-        this.rideRequests = rideRequests;
+        this.rideRequests = rideRequests.orElse(null);
         this.carRepository = carRepository;
         this.rideRepository = rideRepository;
         this.userRepository = userRepository;
@@ -118,14 +117,25 @@ public class DriverService {
                         )
                 );
 
+        if (rideRequests == null) {
+            return List.of();
+        }
+
         return rideRequests.pageOf(driver.id())
                 .stream()
                 .map(RideRequestToDriver::from)
                 .toList();
+
     }
 
     @Transactional
     public RideDTO acceptRideRequest(String identifier, RideRequestID rideRequestID) {
+        if (rideRequests == null) {
+            throw responseException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Ride requests service is disabled"
+            );
+        }
         User user = userRepository.findBy(IdentifierFactory.from(identifier)).orElseThrow();
         UserID userID = new UserID(user.id());
 
@@ -139,12 +149,12 @@ public class DriverService {
 
         RideRequest rideRequest = rideRequests
                 .del(driver.id(), rideRequestID)
-                .orElseThrow(() ->
-                        responseException(
-                                HttpStatus.NOT_FOUND,
-                                "Ride request is not found."
-                        )
-                );
+                .orElseThrow(() -> responseException(
+                HttpStatus.NOT_FOUND,
+                "Ride request is not found"
+        )
+            );
+
 
         Car car = carRepository.findBy(rideRequest.licensePlate())
                 .orElseThrow(() ->

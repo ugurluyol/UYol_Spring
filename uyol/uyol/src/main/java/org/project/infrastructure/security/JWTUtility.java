@@ -1,6 +1,5 @@
 package org.project.infrastructure.security;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -8,7 +7,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.project.domain.shared.containers.Result;
@@ -20,21 +18,28 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 public class JWTUtility {
 
     private static final Logger log = LoggerFactory.getLogger(JWTUtility.class);
 
-    private static final RSAPublicKey KEYCLOAK_PUBLIC_KEY = readX509PublicKey();
+//    private static final RSAPublicKey KEYCLOAK_PUBLIC_KEY = readX509PublicKey();
+
+    private static final RSAPublicKey KEYCLOAK_PUBLIC_KEY = null;
 
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
     public JWTUtility() {
-        this.jwtDecoder = NimbusJwtDecoder.withPublicKey(KEYCLOAK_PUBLIC_KEY).build();
+//        this.jwtDecoder = NimbusJwtDecoder.withPublicKey(KEYCLOAK_PUBLIC_KEY).build();
+//
+//        // Encoder without private key → used only if you later add one
+//        this.jwtEncoder = null;
 
-        // Encoder without private key → used only if you later add one
-        this.jwtEncoder = null;
+            this.jwtDecoder = null;
+            this.jwtEncoder = null;
+
+
     }
 
     /* ================= TOKEN GENERATION ================= */

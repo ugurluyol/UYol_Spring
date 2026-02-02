@@ -13,7 +13,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-@Component
 public class RideRequests {
 
     private static final Duration TTL = Duration.ofSeconds(300);
@@ -29,18 +28,37 @@ public class RideRequests {
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
+    /* ================= ENABLE CHECK ================= */
+
+    public boolean isEnabled() {
+        return redisTemplate != null && stringRedisTemplate != null;
+    }
+
+    public boolean isEmpty(DriverID driverID) {
+        if (!isEnabled()) return true;
+        return pageOf(driverID).isEmpty();
+    }
+
+    /* ================= CRUD ================= */
+
     public void put(DriverID driverID, RideRequest rideRequest) {
+        if (!isEnabled()) return;
+
         String redisKey = key(driverID, rideRequest.id());
         redisTemplate.opsForValue().set(redisKey, rideRequest, TTL);
     }
 
     public Optional<RideRequest> get(DriverID driverID, RideRequestID rideRequestID) {
+        if (!isEnabled()) return Optional.empty();
+
         return Optional.ofNullable(
                 redisTemplate.opsForValue().get(key(driverID, rideRequestID))
         );
     }
 
     public Optional<RideRequest> del(DriverID driverID, RideRequestID rideRequestID) {
+        if (!isEnabled()) return Optional.empty();
+
         String redisKey = key(driverID, rideRequestID);
         RideRequest value = redisTemplate.opsForValue().get(redisKey);
         redisTemplate.delete(redisKey);
@@ -48,6 +66,8 @@ public class RideRequests {
     }
 
     public List<RideRequest> pageOf(DriverID driverID) {
+        if (!isEnabled()) return List.of();
+
         return stringRedisTemplate
                 .keys(driverRequestsKey(driverID))
                 .stream()
@@ -55,6 +75,8 @@ public class RideRequests {
                 .filter(Objects::nonNull)
                 .toList();
     }
+
+    /* ================= KEYS ================= */
 
     private static String driverRequestsKey(DriverID driverID) {
         return "ride_request:{" + driverID.value() + "}:*";

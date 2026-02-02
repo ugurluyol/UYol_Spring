@@ -11,43 +11,55 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.project.domain.shared.containers.Result;
+import org.project.domain.shared.value_objects.Dates;
 import org.project.domain.user.entities.User;
 import org.project.domain.user.repositories.UserRepository;
-import org.project.domain.user.value_objects.*;
+import org.project.domain.user.value_objects.Email;
+import org.project.domain.user.value_objects.Identifier;
+import org.project.domain.user.value_objects.KeyAndCounter;
+import org.project.domain.user.value_objects.PersonalData;
+import org.project.domain.user.value_objects.Phone;
+import org.project.domain.user.value_objects.RefreshToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
 import com.hadzhy.jetquerious.jdbc.JetQuerious;
 
+
 @Repository
+@DependsOn("JDBCInitializer")
 public class JetUserRepository implements UserRepository {
 
     private static final Logger log = LoggerFactory.getLogger(JetUserRepository.class);
 
     private final JetQuerious jet;
 
+    public JetUserRepository(JetQuerious jet) {
+        // ✅ OK only if JDBCInitializer calls JetQuerious.init(dataSource) in @PostConstruct
+        this.jet = jet;
+    }
+
     /* ================= SQL ================= */
 
     static final String SAVE_USER = insert()
             .into("user_account")
-            .columns(
-                    "id",
-                    "firstname",
-                    "surname",
-                    "phone",
-                    "email",
-                    "password",
-                    "birth_date",
-                    "is_verified",
-                    "is_banned",
-                    "is_2fa_enabled",
-                    "secret_key",
-                    "counter",
-                    "creation_date",
-                    "last_updated"
-            )
+            .column("id")
+            .column("firstname")
+            .column("surname")
+            .column("phone")
+            .column("email")
+            .column("password")
+            .column("birth_date")
+            .column("is_verified")
+            .column("is_banned")
+            .column("is_2fa_enabled")
+            .column("secret_key")
+            .column("counter")
+            .column("creation_date")
+            .column("last_updated")
             .values()
             .build()
             .sql();
@@ -61,53 +73,90 @@ public class JetUserRepository implements UserRepository {
             .build()
             .sql();
 
-    static final String UPDATE_PHONE =
-            update("user_account").set("phone = ?, last_updated = ?").where("id = ?").build().sql();
+    static final String UPDATE_PHONE = update("user_account")
+            .set("phone = ?, last_updated = ?")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String UPDATE_COUNTER =
-            update("user_account").set("counter = ?, last_updated = ?").where("id = ?").build().sql();
+    static final String UPDATE_COUNTER = update("user_account")
+            .set("counter = ?, last_updated = ?")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String UPDATE_VERIFICATION =
-            update("user_account").set("is_verified = ?, last_updated = ?").where("id = ?").build().sql();
+    static final String UPDATE_VERIFICATION = update("user_account")
+            .set("is_verified = ?, last_updated = ?")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String UPDATE_BAN =
-            update("user_account").set("is_banned = ?, last_updated = ?").where("id = ?").build().sql();
+    static final String UPDATE_BAN = update("user_account")
+            .set("is_banned = ?, last_updated = ?")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String UPDATE_2FA =
-            update("user_account").set("is_2fa_enabled = ?, last_updated = ?").where("id = ?").build().sql();
+    static final String UPDATE_2FA = update("user_account")
+            .set("is_2fa_enabled = ?, last_updated = ?")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String UPDATE_PASSWORD =
-            update("user_account").set("password = ?, last_updated = ?").where("id = ?").build().sql();
+    static final String UPDATE_PASSWORD = update("user_account")
+            .set("password = ?, last_updated = ?")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String USER_BY_ID =
-            select().all().from("user_account").where("id = ?").build().sql();
+    static final String IS_EMAIL_EXISTS = select()
+            .count("email")
+            .from("user_account")
+            .where("email = ?")
+            .build()
+            .sql();
 
-    static final String USER_BY_EMAIL =
-            select().all().from("user_account").where("email = ?").build().sql();
+    static final String IS_PHONE_EXISTS = select()
+            .count("phone")
+            .from("user_account")
+            .where("phone = ?")
+            .build()
+            .sql();
 
-    static final String USER_BY_PHONE =
-            select().all().from("user_account").where("phone = ?").build().sql();
+    static final String USER_BY_ID = select()
+            .all()
+            .from("user_account")
+            .where("id = ?")
+            .build()
+            .sql();
 
-    static final String IS_EMAIL_EXISTS =
-            select().count("email").from("user_account").where("email = ?").build().sql();
+    static final String USER_BY_EMAIL = select()
+            .all()
+            .from("user_account")
+            .where("email = ?")
+            .build()
+            .sql();
 
-    static final String IS_PHONE_EXISTS =
-            select().count("phone").from("user_account").where("phone = ?").build().sql();
+    static final String USER_BY_PHONE = select()
+            .all()
+            .from("user_account")
+            .where("phone = ?")
+            .build()
+            .sql();
 
-    static final String REFRESH_TOKEN =
-            select().all().from("refresh_token").where("token = ?").build().sql();
-
-    /* ================= CONSTRUCTOR ================= */
-
-    public JetUserRepository() {
-        this.jet = JetQuerious.instance();
-    }
+    static final String REFRESH_TOKEN_BY_TOKEN = select()
+            .all()
+            .from("refresh_token")
+            .where("token = ?")
+            .build()
+            .sql();
 
     /* ================= SAVE / UPDATE ================= */
 
     @Override
     public Result<Integer, Throwable> save(User user) {
         PersonalData p = user.personalData();
+
         return mapTransactionResult(jet.write(
                 SAVE_USER,
                 user.id().toString(),
@@ -128,75 +177,74 @@ public class JetUserRepository implements UserRepository {
     }
 
     @Override
-    public Result<Integer, Throwable> saveRefreshToken(RefreshToken token) {
-        return mapTransactionResult(
-                jet.write(
-                        SAVE_REFRESH_TOKEN,
-                        token.userID().toString(),
-                        token.refreshToken(),
-                        token.refreshToken()
-                )
-        );
+    public Result<Integer, Throwable> saveRefreshToken(RefreshToken refreshToken) {
+        // onConflict(user_id) doUpdateSet("token = ?") needs the token twice (insert token + update token)
+        return mapTransactionResult(jet.write(
+                SAVE_REFRESH_TOKEN,
+                refreshToken.userID().toString(),
+                refreshToken.refreshToken(),
+                refreshToken.refreshToken()
+        ));
     }
 
     @Override
     public Result<Integer, Throwable> updatePhone(User user) {
-        return mapTransactionResult(
-                jet.write(UPDATE_PHONE,
-                        user.personalData().phone().orElse(null),
-                        user.accountDates().lastUpdated(),
-                        user.id().toString())
-        );
+        return mapTransactionResult(jet.write(
+                UPDATE_PHONE,
+                user.personalData().phone().orElse(null),
+                user.accountDates().lastUpdated(),
+                user.id().toString()
+        ));
     }
 
     @Override
     public Result<Integer, Throwable> updateCounter(User user) {
-        return mapTransactionResult(
-                jet.write(UPDATE_COUNTER,
-                        user.keyAndCounter().counter(),
-                        user.accountDates().lastUpdated(),
-                        user.id().toString())
-        );
+        return mapTransactionResult(jet.write(
+                UPDATE_COUNTER,
+                user.keyAndCounter().counter(),
+                user.accountDates().lastUpdated(),
+                user.id().toString()
+        ));
     }
 
     @Override
     public Result<Integer, Throwable> updateVerification(User user) {
-        return mapTransactionResult(
-                jet.write(UPDATE_VERIFICATION,
-                        user.isVerified(),
-                        user.accountDates().lastUpdated(),
-                        user.id().toString())
-        );
+        return mapTransactionResult(jet.write(
+                UPDATE_VERIFICATION,
+                user.isVerified(),
+                user.accountDates().lastUpdated(),
+                user.id().toString()
+        ));
     }
 
     @Override
     public Result<Integer, Throwable> updateBan(User user) {
-        return mapTransactionResult(
-                jet.write(UPDATE_BAN,
-                        user.isBanned(),
-                        user.accountDates().lastUpdated(),
-                        user.id().toString())
-        );
+        return mapTransactionResult(jet.write(
+                UPDATE_BAN,
+                user.isBanned(),
+                user.accountDates().lastUpdated(),
+                user.id().toString()
+        ));
     }
 
     @Override
     public Result<Integer, Throwable> update2FA(User user) {
-        return mapTransactionResult(
-                jet.write(UPDATE_2FA,
-                        user.is2FAEnabled(),
-                        user.accountDates().lastUpdated(),
-                        user.id().toString())
-        );
+        return mapTransactionResult(jet.write(
+                UPDATE_2FA,
+                user.is2FAEnabled(),
+                user.accountDates().lastUpdated(),
+                user.id().toString()
+        ));
     }
 
     @Override
     public Result<Integer, Throwable> updatePassword(User user) {
-        return mapTransactionResult(
-                jet.write(UPDATE_PASSWORD,
-                        user.personalData().password().orElse(null),
-                        user.accountDates().lastUpdated(),
-                        user.id().toString())
-        );
+        return mapTransactionResult(jet.write(
+                UPDATE_PASSWORD,
+                user.personalData().password().orElse(null),
+                user.accountDates().lastUpdated(),
+                user.id().toString()
+        ));
     }
 
     /* ================= EXISTS ================= */
@@ -219,17 +267,20 @@ public class JetUserRepository implements UserRepository {
 
     @Override
     public Result<User, Throwable> findBy(UUID id) {
-        return mapUserResult(jet.read(USER_BY_ID, this::userMapper, id.toString()));
+        var r = jet.read(USER_BY_ID, this::userMapper, id.toString());
+        return new Result<>(r.value(), r.throwable(), r.success());
     }
 
     @Override
     public Result<User, Throwable> findBy(Email email) {
-        return mapUserResult(jet.read(USER_BY_EMAIL, this::userMapper, email.email()));
+        var r = jet.read(USER_BY_EMAIL, this::userMapper, email.email());
+        return new Result<>(r.value(), r.throwable(), r.success());
     }
 
     @Override
     public Result<User, Throwable> findBy(Phone phone) {
-        return mapUserResult(jet.read(USER_BY_PHONE, this::userMapper, phone.phoneNumber()));
+        var r = jet.read(USER_BY_PHONE, this::userMapper, phone.phoneNumber());
+        return new Result<>(r.value(), r.throwable(), r.success());
     }
 
     @Override
@@ -241,8 +292,9 @@ public class JetUserRepository implements UserRepository {
     }
 
     @Override
-    public Result<RefreshToken, Throwable> findRefreshToken(String token) {
-        return mapRefreshTokenResult(jet.read(REFRESH_TOKEN, this::refreshTokenMapper, token));
+    public Result<RefreshToken, Throwable> findRefreshToken(String refreshToken) {
+        var r = jet.read(REFRESH_TOKEN_BY_TOKEN, this::refreshTokenMapper, refreshToken);
+        return new Result<>(r.value(), r.throwable(), r.success());
     }
 
     /* ================= MAPPERS ================= */
@@ -263,7 +315,7 @@ public class JetUserRepository implements UserRepository {
                 rs.getBoolean("is_verified"),
                 rs.getBoolean("is_banned"),
                 new KeyAndCounter(rs.getString("secret_key"), rs.getInt("counter")),
-                new org.project.domain.shared.value_objects.Dates(
+                new Dates(
                         rs.getObject("creation_date", Timestamp.class).toLocalDateTime(),
                         rs.getObject("last_updated", Timestamp.class).toLocalDateTime()
                 ),
@@ -276,15 +328,5 @@ public class JetUserRepository implements UserRepository {
                 UUID.fromString(rs.getString("user_id")),
                 rs.getString("token")
         );
-    }
-
-    private static Result<User, Throwable> mapUserResult(
-            com.hadzhy.jetquerious.util.Result<User, Throwable> r) {
-        return new Result<>(r.value(), r.throwable(), r.success());
-    }
-
-    private static Result<RefreshToken, Throwable> mapRefreshTokenResult(
-            com.hadzhy.jetquerious.util.Result<RefreshToken, Throwable> r) {
-        return new Result<>(r.value(), r.throwable(), r.success());
     }
 }

@@ -3,11 +3,13 @@ package org.project.infrastructure.communication;
 import org.project.domain.user.entities.OTP;
 import org.project.domain.user.value_objects.Email;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
+//@Profile("!mail")
 public class EmailInteractionService {
 
     private final JavaMailSender mailSender;

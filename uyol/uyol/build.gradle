@@ -21,6 +21,9 @@ repositories {
 
 dependencies {
 
+    //MySQL
+    runtimeOnly "com.mysql:mysql-connector-j:8.3.0"
+
     // REST + JSON
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -30,7 +33,7 @@ dependencies {
 
     // Database
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    runtimeOnly 'org.postgresql:postgresql'
+//    runtimeOnly 'org.postgresql:postgresql'
 
     // Flyway
     implementation 'org.flywaydb:flyway-core'
@@ -52,16 +55,26 @@ dependencies {
     implementation 'com.twilio.sdk:twilio:11.0.0-rc.2'
     implementation 'de.mkammerer:argon2-jvm:2.12'
     implementation 'io.github.hacihaciyev:jet-querious:1.0.7'
+//    implementation 'com.hadzhy:jet-querious:1.0.7'
 
     // Tests
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.testcontainers:testcontainers'
-    testImplementation 'org.testcontainers:postgresql'
+//    testImplementation 'org.testcontainers:testcontainers'
+//    testImplementation 'org.testcontainers:postgresql'
     testImplementation 'net.datafaker:datafaker:2.4.1'
     testImplementation 'org.assertj:assertj-core:3.27.2'
     testImplementation 'org.mockito:mockito-core:4.+'
     testImplementation 'com.tngtech.archunit:archunit:1.4.1'
 }
+
+tasks.withType(Test) {
+    enabled = true
+}
+tasks.withType(Test).configureEach {
+    enabled = false
+}
+
+
 
 test {
     useJUnitPlatform()

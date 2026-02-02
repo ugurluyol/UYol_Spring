@@ -3,6 +3,7 @@ package org.project.application.service;
 import static org.project.application.util.RestUtil.required;
 import static org.project.application.util.RestUtil.responseException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.project.application.dto.fleet.CarDTO;
@@ -48,14 +49,14 @@ public class OwnerService {
     private final RideRepository rideRepository;
 
     public OwnerService(
-            RideRequests rideRequests,
+            Optional<RideRequests> rideRequests,
             UserRepository userRepository,
             OwnerRepository ownerRepository,
             CarRepository carRepository,
             DriverRepository driverRepository,
             RideRepository rideRepository
     ) {
-        this.rideRequests = rideRequests;
+        this.rideRequests = rideRequests.orElse(null);
         this.userRepository = userRepository;
         this.ownerRepository = ownerRepository;
         this.carRepository = carRepository;
