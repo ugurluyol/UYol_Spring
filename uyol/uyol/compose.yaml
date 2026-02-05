@@ -1,0 +1,37 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: uyol-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: uyol
+      MYSQL_USER: uyol
+      MYSQL_PASSWORD: uyolpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - uyol_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","127.0.0.1","-uroot","-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  uyol-spring:
+    build: .
+    container_name: uyol-spring
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8088:10000"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/uyol?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: uyol
+      SPRING_DATASOURCE_PASSWORD: uyolpass
+
+volumes:
+  uyol_mysql_data:
