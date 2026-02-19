@@ -4,18 +4,17 @@ CREATE TABLE user_account (
     surname VARCHAR(56) NOT NULL,
     phone VARCHAR(22),
     email VARCHAR(256) NOT NULL,
-    password VARCHAR,
-    birth_date TIMESTAMP NOT NULL,
-    is_verified BOOLEAN NOT NULL,
-    is_2FA_enabled BOOLEAN NOT NULL,
-    is_banned BOOLEAN NOT NULL,
-    secret_key VARCHAR(28) NOT NULL,
+    password VARCHAR(255),
+    birth_date DATETIME NOT NULL,
+    is_verified TINYINT(1) NOT NULL,
+    is_2FA_enabled TINYINT(1) NOT NULL,
+    is_banned TINYINT(1) NOT NULL,
+    secret_key VARCHAR(64) NOT NULL,
     counter BIGINT NOT NULL,
-    creation_date TIMESTAMP NOT NULL,
-    last_updated TIMESTAMP NOT NULL,
+    creation_date DATETIME NOT NULL,
+    last_updated DATETIME NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE UNIQUE INDEX user_email_index ON user_account (email);
-
 CREATE UNIQUE INDEX user_phone_index ON user_account (phone);

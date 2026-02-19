@@ -102,9 +102,20 @@ public class AuthService {
     /* ================= OTP ================= */
 
     public void resendOTP(String identifier) {
-        User user = verifiedUserBy(identifier);
+        Result<User, Throwable> result =
+                userRepository.findBy(IdentifierFactory.from(identifier));
+
+        if (result.isFailure())
+            throw responseException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+
+        User user = result.get();
+
+        if (user.isVerified())
+            throw responseException(HttpStatus.BAD_REQUEST, "Account already verified");
+
         generateAndSendOTP(user);
     }
+
 
     public void verification(String receivedOTP) {
         OTP.validate(receivedOTP);

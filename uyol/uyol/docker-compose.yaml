@@ -1,0 +1,25 @@
+services:
+  mysql:
+    container_name: uyol-mysql
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: uyol
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  keycloak:
+    container_name: uyol-keycloak
+    image: quay.io/keycloak/keycloak:26.2
+    env_file:
+      - .env
+    ports:
+      - "7080:7080"
+    command: [ "start-dev", "--http-port", "7080" ]
+
+volumes:
+  mysql:
